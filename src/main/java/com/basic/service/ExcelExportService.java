@@ -1,27 +1,14 @@
 package com.basic.service;
 
-
-import java.io.ByteArrayOutputStream;
-import java.util.List;
-
-import org.apache.poi.ss.usermodel.BorderStyle;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.FillPatternType;
-import org.apache.poi.ss.usermodel.Font;
-import org.apache.poi.ss.usermodel.HorizontalAlignment;
-import org.apache.poi.ss.usermodel.IndexedColors;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.stereotype.Service;
-
 import com.basic.model.Candidate;
 import com.basic.repository.CandidateRepository;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.stereotype.Service;
+import java.io.ByteArrayOutputStream;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -61,7 +48,7 @@ public class ExcelExportService {
                 "ID", "First Name", "Last Name", "Date of Birth",
                 "PAN Card", "Current Company", "On Notice Period",
                 "Notice Days", "Last Working Day",
-                "Current Salary (₹)", "Expected Salary (₹)", "Submitted At"
+                "Current Salary (Rs)", "Expected Salary (Rs)", "Submitted At"
             };
 
             Row headerRow = sheet.createRow(0);
@@ -79,7 +66,8 @@ public class ExcelExportService {
                 // Alternate row color
                 if (rowNum % 2 == 0) {
                     for (int i = 0; i < headers.length; i++) {
-                        row.createCell(i).setCellStyle(altRowStyle);
+                        Cell cell = row.createCell(i);
+                        cell.setCellStyle(altRowStyle);
                     }
                 }
 
@@ -109,10 +97,19 @@ public class ExcelExportService {
                 rowNum++;
             }
 
-            // ─── Auto size all columns ─────────────────────
-            for (int i = 0; i < headers.length; i++) {
-                sheet.autoSizeColumn(i);
-            }
+            // ─── Manual Column Widths (no autoSizeColumn - needs fonts not available on Linux) ─
+            sheet.setColumnWidth(0, 3000);   // ID
+            sheet.setColumnWidth(1, 6000);   // First Name
+            sheet.setColumnWidth(2, 6000);   // Last Name
+            sheet.setColumnWidth(3, 5000);   // DOB
+            sheet.setColumnWidth(4, 6000);   // PAN Card
+            sheet.setColumnWidth(5, 8000);   // Current Company
+            sheet.setColumnWidth(6, 5000);   // On Notice
+            sheet.setColumnWidth(7, 5000);   // Notice Days
+            sheet.setColumnWidth(8, 6000);   // Last Working Day
+            sheet.setColumnWidth(9, 7000);   // Current Salary
+            sheet.setColumnWidth(10, 7000);  // Expected Salary
+            sheet.setColumnWidth(11, 8000);  // Submitted At
 
             // ─── Freeze header row ─────────────────────────
             sheet.createFreezePane(0, 1);
