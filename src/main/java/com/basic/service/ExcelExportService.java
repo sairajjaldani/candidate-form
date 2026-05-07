@@ -1,0 +1,125 @@
+package com.basic.service;
+
+
+import java.io.ByteArrayOutputStream;
+import java.util.List;
+
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.stereotype.Service;
+
+import com.basic.model.Candidate;
+import com.basic.repository.CandidateRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class ExcelExportService {
+
+    private final CandidateRepository candidateRepository;
+
+    public byte[] exportCandidatesToExcel() throws Exception {
+
+        List<Candidate> candidates = candidateRepository.findAll();
+
+        log.info("Exporting {} candidates to Excel", candidates.size());
+
+        try (Workbook workbook = new XSSFWorkbook()) {
+
+            Sheet sheet = workbook.createSheet("Candidates");
+
+            // ─── Header Style ──────────────────────────────
+            CellStyle headerStyle = workbook.createCellStyle();
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerFont.setColor(IndexedColors.WHITE.getIndex());
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            headerStyle.setAlignment(HorizontalAlignment.CENTER);
+            headerStyle.setBorderBottom(BorderStyle.THIN);
+
+            // ─── Alternate Row Style ───────────────────────
+            CellStyle altRowStyle = workbook.createCellStyle();
+            altRowStyle.setFillForegroundColor(IndexedColors.LIGHT_TURQUOISE.getIndex());
+            altRowStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            // ─── Headers ───────────────────────────────────
+            String[] headers = {
+                "ID", "First Name", "Last Name", "Date of Birth",
+                "PAN Card", "Current Company", "On Notice Period",
+                "Notice Days", "Last Working Day",
+                "Current Salary (₹)", "Expected Salary (₹)", "Submitted At"
+            };
+
+            Row headerRow = sheet.createRow(0);
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            // ─── Data Rows ─────────────────────────────────
+            int rowNum = 1;
+            for (Candidate c : candidates) {
+                Row row = sheet.createRow(rowNum);
+
+                // Alternate row color
+                if (rowNum % 2 == 0) {
+                    for (int i = 0; i < headers.length; i++) {
+                        row.createCell(i).setCellStyle(altRowStyle);
+                    }
+                }
+
+                row.createCell(0).setCellValue(c.getId());
+                row.createCell(1).setCellValue(c.getFirstName());
+                row.createCell(2).setCellValue(c.getLastName());
+                row.createCell(3).setCellValue(
+                    c.getDob() != null ? c.getDob().toString() : ""
+                );
+                row.createCell(4).setCellValue(c.getPanCard());
+                row.createCell(5).setCellValue(c.getCurrentCompany());
+                row.createCell(6).setCellValue(
+                    Boolean.TRUE.equals(c.getOnNoticePeriod()) ? "Yes" : "No"
+                );
+                row.createCell(7).setCellValue(
+                    c.getNoticePeriodDays() != null ? c.getNoticePeriodDays() : 0
+                );
+                row.createCell(8).setCellValue(
+                    c.getLastWorkingDay() != null ? c.getLastWorkingDay().toString() : "N/A"
+                );
+                row.createCell(9).setCellValue(c.getCurrentSalary());
+                row.createCell(10).setCellValue(c.getExpectedSalary());
+                row.createCell(11).setCellValue(
+                    c.getSubmittedAt() != null ? c.getSubmittedAt().toString() : ""
+                );
+
+                rowNum++;
+            }
+
+            // ─── Auto size all columns ─────────────────────
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            // ─── Freeze header row ─────────────────────────
+            sheet.createFreezePane(0, 1);
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            workbook.write(out);
+            return out.toByteArray();
+        }
+    }
+}
