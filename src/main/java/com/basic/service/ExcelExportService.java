@@ -48,7 +48,7 @@ public class ExcelExportService {
                 "ID", "First Name", "Last Name", "Date of Birth",
                 "PAN Card", "Current Company", "On Notice Period",
                 "Notice Days", "Last Working Day",
-                "Current Salary (Rs)", "Expected Salary (Rs)", "Submitted At"
+                "Current Salary (Rs)", "Expected Salary (Rs)", "Submitted At", "Resume URL", "Portfolio Link", "LinkedIn Link"
             };
 
             Row headerRow = sheet.createRow(0);
@@ -93,6 +93,16 @@ public class ExcelExportService {
                 row.createCell(11).setCellValue(
                     c.getSubmittedAt() != null ? c.getSubmittedAt().toString() : ""
                 );
+             // Was showing filename - now show clickable URL
+                row.createCell(12).setCellValue(
+                    c.getResumeUrl() != null ? c.getResumeUrl() : "Not uploaded"
+                );
+                	row.createCell(13).setCellValue(
+                	    c.getPortfolioLink() != null ? c.getPortfolioLink() : ""
+                	);
+                	row.createCell(14).setCellValue(
+                	    c.getLinkedinLink() != null ? c.getLinkedinLink() : ""
+                	);
 
                 rowNum++;
             }
@@ -110,6 +120,9 @@ public class ExcelExportService {
             sheet.setColumnWidth(9, 7000);   // Current Salary
             sheet.setColumnWidth(10, 7000);  // Expected Salary
             sheet.setColumnWidth(11, 8000);  // Submitted At
+            sheet.setColumnWidth(12, 7000);
+            sheet.setColumnWidth(13, 8000);
+            sheet.setColumnWidth(14, 8000);
 
             // ─── Freeze header row ─────────────────────────
             sheet.createFreezePane(0, 1);

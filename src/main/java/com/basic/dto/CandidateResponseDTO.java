@@ -22,4 +22,8 @@ public class CandidateResponseDTO {
     private Double currentSalary;
     private Double expectedSalary;
     private LocalDateTime submittedAt;
+    private String resumeFileName;
+    private String resumeUrl;
+    private String portfolioLink;
+    private String linkedinLink;
 }

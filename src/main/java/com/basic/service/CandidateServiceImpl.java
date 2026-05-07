@@ -4,26 +4,29 @@ package com.basic.service;
 
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.basic.dto.CandidateRequestDTO;
 import com.basic.dto.CandidateResponseDTO;
 import com.basic.model.Candidate;
 import com.basic.repository.CandidateRepository;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 
 import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class CandidateServiceImpl implements CandidateService {
 
     private final CandidateRepository candidateRepository;
-
+    private final Cloudinary cloudinary;
     @Override
     public CandidateResponseDTO saveCandidate(CandidateRequestDTO request) {
 
@@ -76,6 +79,8 @@ public class CandidateServiceImpl implements CandidateService {
                 )
                 .currentSalary(dto.getCurrentSalary())
                 .expectedSalary(dto.getExpectedSalary())
+                .portfolioLink(dto.getPortfolioLink())
+                .linkedinLink(dto.getLinkedinLink())
                 .build();
     }
 
@@ -93,6 +98,45 @@ public class CandidateServiceImpl implements CandidateService {
                 .currentSalary(candidate.getCurrentSalary())
                 .expectedSalary(candidate.getExpectedSalary())
                 .submittedAt(candidate.getSubmittedAt())
+                .resumeFileName(candidate.getResumeFileName())
+                .portfolioLink(candidate.getPortfolioLink())
+                .linkedinLink(candidate.getLinkedinLink())
                 .build();
+    }
+    
+    @Override
+    public String saveResume(Long id, MultipartFile file) throws Exception {
+
+        Candidate candidate = candidateRepository.findById(id)
+                .orElseThrow(() -> new ValidationException("Candidate not found"));
+
+        log.info("Uploading resume to Cloudinary for candidate ID: {}", id);
+
+        // Upload to Cloudinary — auto detects any file format
+        Map uploadResult = cloudinary.uploader().upload(
+            file.getBytes(),
+            ObjectUtils.asMap(
+                "folder", "candidate-resumes",
+                "resource_type", "auto",
+                "public_id", "candidate_" + id + "_" + System.currentTimeMillis()
+            )
+        );
+        // Get URL
+        String url = (String) uploadResult.get("secure_url");
+
+        // Fix URL so PDF/file opens directly in browser
+        if (url.contains("/raw/upload/")) {
+            url = url.replace("/raw/upload/", "/raw/upload/fl_attachment/");
+        }
+
+        log.info("Resume uploaded to Cloudinary: {}", url);
+
+        // Save to DB
+        candidate.setResumeFileName(file.getOriginalFilename());
+        candidate.setResumeUrl(url);
+        candidate.setResumePublicId((String) uploadResult.get("public_id"));
+        candidateRepository.save(candidate);
+
+        return url;
     }
 }

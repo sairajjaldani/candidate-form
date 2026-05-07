@@ -47,6 +47,13 @@ public class Candidate {
 
     @Column(updatable = false)
     private LocalDateTime submittedAt;
+    
+    private String resumeFileName;
+    private String resumeUrl;        // Cloudinary URL
+    private String resumePublicId;   // Cloudinary public ID
+    // Links
+    private String portfolioLink;
+    private String linkedinLink;
 
     @PrePersist
     public void prePersist() {

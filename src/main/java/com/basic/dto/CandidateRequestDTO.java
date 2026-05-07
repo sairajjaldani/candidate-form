@@ -46,4 +46,8 @@ public class CandidateRequestDTO {
     @NotNull(message = "Expected salary is required")
     @Positive(message = "Salary must be a positive number")
     private Double expectedSalary;
+    
+ // Optional links
+    private String portfolioLink;
+    private String linkedinLink;
 }
